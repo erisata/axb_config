@@ -61,7 +61,7 @@
 %%% Public API.
 %%% ============================================================================
 
-%%
+%%  @doc
 %%  Start the config service.
 %%  No rutime values are specified at the startup.
 %%
@@ -72,7 +72,7 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, app_env, []).
 
 
-%%
+%%  @doc
 %%  Start the config service with initial
 %%  configuration set to ConstConfig.
 %%
@@ -83,7 +83,7 @@ start_link(ConstConfig) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, {const_config, ConstConfig}, []).
 
 
-%%
+%%  @doc
 %%  Register configuration spec to the specific path.
 %%
 -spec register_config(ConfigPath :: [atom()], ConfigSpec :: #config{})
@@ -93,7 +93,7 @@ register_config(ConfigPath, ConfigSpec) when is_list(ConfigPath) ->
     gen_server:call(?MODULE, {register_config, ConfigPath, ConfigSpec}).
 
 
-%%
+%%  @doc
 %%  Returns all the configs, under the specified path. The function
 %%  returns particular #config{}, if the ConfigPath points it directly,
 %%  or a map of configs under the specified preffix.
@@ -105,7 +105,7 @@ get_config_info(ConfigPath) ->
     gen_server:call(?MODULE, {get_config_info, ConfigPath}).
 
 
-%%
+%%  @doc
 %%  Returns actual/effective configuration values, that should be used
 %%  by the configured components. The path should point to the particular
 %%  configuration, that was previously configured via register_config/2.
@@ -127,7 +127,7 @@ get_actual_config(ConfigPath) ->
     get_actual_config(ConfigPath, default).
 
 
-%%
+%%  @doc
 %%  Reloads environment configuration, re-reads it from the file.
 %%
 -spec reload_env_config()
@@ -137,7 +137,7 @@ reload_env_config() ->
     gen_server:call(?MODULE, reload_env_config).
 
 
-%%
+%%  @doc
 %%  Set config values at runtime.
 %%  The values can be reset by setting it (or any of its parents) to undefined.
 %%
@@ -171,7 +171,7 @@ set_runtime_config(RuntimeValues) ->
 %%% Callbacks for the gen_server.
 %%% =============================================================================
 
-%%
+%%  @private
 %%  Initialization.
 %%
 init(app_env) ->
@@ -221,7 +221,7 @@ init({const_config, ConstConfig}) ->
     {ok, State}.
 
 
-%%
+%%  @private
 %%  Synchronous calls.
 %%
 handle_call({register_config, ConfigPath, ConfigSpec}, _From, State) ->
@@ -265,14 +265,14 @@ handle_call(_Unknown, _From, State) ->
     {reply, undefined, State}.
 
 
-%%
+%%  @private
 %%  Asynchronous events.
 %%
 handle_cast(_Event, State) ->
     {noreply, State}.
 
 
-%%
+%%  @private
 %%  Handle other messages.
 %%
 handle_info(check_env_config, State = #state{env_file = EnvFile, env_period = EnvPeriod}) ->
@@ -293,14 +293,14 @@ handle_info(_Unknown, State) ->
     {noreply, State}.
 
 
-%%
+%%  @private
 %%  Termination.
 %%
 terminate(_Reason, _State) ->
     ok.
 
 
-%%
+%%  @private
 %%  Code upgrades.
 %%
 code_change(_OldVsn, State, _Extra) ->
@@ -312,7 +312,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions.
 %%% ============================================================================
 
-%%
+%%  @private
 %%  Get actual values for the specified config. Example:
 %%
 %%      get_actual([a, b], #{a => #{b => #config{parameters => #{
@@ -343,7 +343,7 @@ get_actual(ConfigPath, ConfigVariant, Configs) ->
     end.
 
 
-%%
+%%  @private
 %%  get_config returns the entire #config{}
 %%  for the specified name.
 %%
@@ -357,7 +357,7 @@ get_config([Name | Other], Configs) ->
     end.
 
 
-%%
+%%  @private
 %%
 %%
 read_env_config(State = #state{configs = Configs, env_file = EnvFile, env_mtime = EnvMTime}) ->
@@ -381,7 +381,7 @@ read_env_config(State = #state{configs = Configs, env_file = EnvFile, env_mtime 
     end.
 
 
-%%
+%%  @private
 %%  Parse properties from a file similar to the java properties file.
 %%  This function returns [{Name :: string(), Value :: string()}].
 %%
@@ -407,7 +407,7 @@ parse_properties(Contents) ->
     {ok, lists:filtermap(ParseLine, ContentLines)}.
 
 
-%%
+%%  @private
 %%  Transforms config_values() into nested map. Only
 %%  first level of the composite keys are resolved
 %%  to nested maps. Other levels are considered as
@@ -460,9 +460,8 @@ normalize_config(PropName = [C | _], Value, Normalized) when is_integer(C) ->
     normalize_config(KeyAtoms, Value, Normalized).
 
 
-%%
+%%  @private
 %%  Convert values to the user specified type.
-%%
 %%
 decode_value(_Type, undefined) -> undefined;
 decode_value(boolean, true)    -> true;
@@ -483,7 +482,7 @@ decode_value(term, Value) when is_list(Value) ->
     Term.
 
 
-%%
+%%  @private
 %%
 %%
 add_config_spec([Name], NewConfig, Configs) ->
@@ -493,7 +492,7 @@ add_config_spec([Name | Tail], NewConfig, Configs) ->
     Configs#{Name => add_config_spec(Tail, NewConfig, maps:get(Name, Configs, #{}))}.
 
 
-%%
+%%  @private
 %%
 %%
 merge_values(NewValues, Config) when not is_map(NewValues); not is_map(Config) ->
@@ -508,7 +507,7 @@ merge_values(NewValues, Config) when is_map(NewValues), is_map(Config) ->
     end, NewValues)).
 
 
-%%
+%%  @private
 %%  Update config with given values.
 %%
 %%  All the values, not provided in the NewValues, will be cleared

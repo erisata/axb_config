@@ -120,6 +120,9 @@ get_actual_config(ConfigPath, ConfigVariant) ->
     gen_server:call(?MODULE, {get_actual_config, ConfigPath, ConfigVariant}).
 
 
+%%
+%%  @equiv get_actual_config(ConfigPath, default)
+%%
 -spec get_actual_config(ConfigPath :: [atom()])
     -> {ok, map()}.
 

@@ -35,7 +35,7 @@ config_values() = [{Name::string() | [atom()] | atom(), Value::term()}] | #{Name
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#get_actual_config-1">get_actual_config/1</a></td><td></td></tr><tr><td valign="top"><a href="#get_actual_config-2">get_actual_config/2</a></td><td>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#get_actual_config-1">get_actual_config/1</a></td><td>Equivalent to <a href="#get_actual_config-2"><tt>get_actual_config(ConfigPath, default)</tt></a>.</td></tr><tr><td valign="top"><a href="#get_actual_config-2">get_actual_config/2</a></td><td>
 Returns actual/effective configuration values, that should be used
 by the configured components.</td></tr><tr><td valign="top"><a href="#get_config_info-1">get_config_info/1</a></td><td>
 Returns all the configs, under the specified path.</td></tr><tr><td valign="top"><a href="#register_config-2">register_config/2</a></td><td>
@@ -59,6 +59,8 @@ configuration set to ConstConfig.</td></tr></table>
 get_actual_config(ConfigPath::[atom()]) -&gt; {ok, #{}}
 </code></pre>
 <br />
+
+Equivalent to [`get_actual_config(ConfigPath, default)`](#get_actual_config-2).
 
 <a name="get_actual_config-2"></a>
 

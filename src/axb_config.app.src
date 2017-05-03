@@ -1,0 +1,32 @@
+%/--------------------------------------------------------------------
+%| Copyright 2017 Erisata, UAB (Ltd.)
+%|
+%| Licensed under the Apache License, Version 2.0 (the "License");
+%| you may not use this file except in compliance with the License.
+%| You may obtain a copy of the License at
+%|
+%|     http://www.apache.org/licenses/LICENSE-2.0
+%|
+%| Unless required by applicable law or agreed to in writing, software
+%| distributed under the License is distributed on an "AS IS" BASIS,
+%| WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%| See the License for the specific language governing permissions and
+%| limitations under the License.
+%\--------------------------------------------------------------------
+
+{application, axb_config, [
+    {description, "AxB: Config"},
+    {vsn, git},
+    {registered, [axb_config]},
+    {mod, {axb_config_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        sasl
+    ]},
+    {env, [
+        {env_file,   undefined},    % Environment config, e.g. "/etc/my_config.cfg"
+        {env_reload, undefined}     % Env config reload period, e.g. 10000
+    ]}
+]}.
+

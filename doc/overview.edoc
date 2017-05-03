@@ -28,4 +28,12 @@ The actual configuration is derived by merging all the sources
 by priority as listed above (runtime values have highest priority).
 
 
+
+TODO: properties file.
+
+TODO: config metadata.
+
+TODO: usage example.
+
+
 @end

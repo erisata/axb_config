@@ -72,9 +72,9 @@ test_basic(_Config) ->
     % Check if register config correctly registers config.
     ok = axb_config:register_config(
         [registry, conn],
-        #config{parameters = #{host => #config_param{type = string, default = "nowhere"}}}
+        #axb_config{parameters = #{host => #axb_config_param{type = string, default = "nowhere"}}}
     ),
-    {ok, #config{parameters = #{host := #config_param{
+    {ok, #axb_config{parameters = #{host := #axb_config_param{
         type = string,
         default = "nowhere",
         actual = "localhost",
@@ -84,7 +84,7 @@ test_basic(_Config) ->
     %
     % Check if runtime config overrides other values.
     ok = axb_config:set_runtime_config(#{"registry.conn.host" => "somehost"}),
-    {ok, #config{parameters = #{host := #config_param{
+    {ok, #axb_config{parameters = #{host := #axb_config_param{
         type = string,
         default = "nowhere",
         runtime = "somehost",
@@ -119,9 +119,9 @@ test_reload_config(Config) ->
     % Check if register config correctly registers config.
     ok = axb_config:register_config(
         [registry, conn],
-        #config{parameters = #{host => #config_param{type = string, default = "nowhere"}}}
+        #axb_config{parameters = #{host => #axb_config_param{type = string, default = "nowhere"}}}
     ),
-    {ok, #config{parameters = #{host := #config_param{
+    {ok, #axb_config{parameters = #{host := #axb_config_param{
         type = string,
         default = "nowhere",
         actual = "localhost",
@@ -136,7 +136,7 @@ test_reload_config(Config) ->
     ok = axb_config:reload_env_config(),
     %
     % Check if new config is reloaded correctly registers config.
-    {ok, #config{parameters = #{host := #config_param{
+    {ok, #axb_config{parameters = #{host := #axb_config_param{
         type = string,
         default = "nowhere",
         actual = "newhost",

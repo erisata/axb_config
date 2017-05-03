@@ -2,7 +2,7 @@
 %%
 %%  Configuration parameter.
 %%
--record(config_param, {
+-record(axb_config_param, {
    %name                :: [atom()],        % Name of the parameter is stored as a name in the #config{parameters} map.
     type                :: string | integer | boolean | term,   % Type of the values.
     description         :: string(),        % Description of the parameter.
@@ -18,7 +18,7 @@
 %%
 %%  Configuration structure, used by a particular component.
 %%
--record(config, {
+-record(axb_config, {
    %config_name :: [atom()],                % Name is maintained separatelly, in a map; see axb_config.
     config_type :: ftp | sftp | atom(),     % Type of the configuration as a whole.
     description :: string(),                % Description of the configuration.

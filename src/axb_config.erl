@@ -86,7 +86,7 @@ start_link(ConstConfig) ->
 %%  @doc
 %%  Register configuration spec to the specific path.
 %%
--spec register_config(ConfigPath :: [atom()], ConfigSpec :: #config{})
+-spec register_config(ConfigPath :: [atom()], ConfigSpec :: #axb_config{})
     -> ok | {error, Reason :: term()}.
 
 register_config(ConfigPath, ConfigSpec) when is_list(ConfigPath) ->
@@ -95,11 +95,11 @@ register_config(ConfigPath, ConfigSpec) when is_list(ConfigPath) ->
 
 %%  @doc
 %%  Returns all the configs, under the specified path. The function
-%%  returns particular #config{}, if the ConfigPath points it directly,
+%%  returns particular #axb_config{}, if the ConfigPath points it directly,
 %%  or a map of configs under the specified preffix.
 %%
 -spec get_config_info(ConfigPath :: [atom()])
-    -> {ok, #config{} | map()}.
+    -> {ok, #axb_config{} | map()}.
 
 get_config_info(ConfigPath) ->
     gen_server:call(?MODULE, {get_config_info, ConfigPath}).
@@ -111,7 +111,7 @@ get_config_info(ConfigPath) ->
 %%  configuration, that was previously configured via register_config/2.
 %%
 %%  The configuration is returned as a map, with keys as atoms, and
-%%  values of types, as specified in the #config_param.type.
+%%  values of types, as specified in the #axb_config_param.type.
 %%
 -spec get_actual_config(ConfigPath :: [atom()], ConfigVariant :: atom())
     -> {ok, map()}.
@@ -160,7 +160,7 @@ set_runtime_config(RuntimeValues) ->
 %%  Internal state.
 %%
 -record(state, {
-    configs     :: #{atom => #{} | #config{}},  % Current parsed/normalized config.
+    configs     :: #{atom => #{} | #axb_config{}},  % Current parsed/normalized config.
     env_file    :: string(),                    % Name of the config file.
     env_period  :: integer() | undefined,       % Reload interval in MS for the ENV file.
     env_mtime   :: calendar:datetime(),         % Last modification time of the config file.
@@ -234,8 +234,8 @@ handle_call({register_config, ConfigPath, ConfigSpec}, _From, State) ->
         rt_config  = RtConfig
     } = State,
     NewConfigs = add_config_spec(ConfigPath, ConfigSpec, Configs),
-    ConfigsWithEnv = apply_config(EnvConfig, #config_param.environment, NewConfigs),
-    ConfigsWithRt  = apply_config(RtConfig,  #config_param.runtime, ConfigsWithEnv),
+    ConfigsWithEnv = apply_config(EnvConfig, #axb_config_param.environment, NewConfigs),
+    ConfigsWithRt  = apply_config(RtConfig,  #axb_config_param.runtime, ConfigsWithEnv),
     NewState = State#state{
         configs = ConfigsWithRt
     },
@@ -257,7 +257,7 @@ handle_call(reload_env_config, _From, State) ->
 
 handle_call({set_runtime_config, RuntimeConfig}, _From, State = #state{configs = Configs, rt_config = RtConfig}) ->
     NewRtConfig = merge_values(normalize_config(RuntimeConfig), RtConfig),
-    NewConfigs  = apply_config(NewRtConfig, #config_param.runtime, Configs),
+    NewConfigs  = apply_config(NewRtConfig, #axb_config_param.runtime, Configs),
     NewState = State#state{
         configs   = NewConfigs,
         rt_config = NewRtConfig
@@ -318,24 +318,24 @@ code_change(_OldVsn, State, _Extra) ->
 %%  @private
 %%  Get actual values for the specified config. Example:
 %%
-%%      get_actual([a, b], #{a => #{b => #config{parameters => #{
-%%          x => #config_param{actual = 3}
-%%          y => #{yy => #config_param{actual = 14}}
+%%      get_actual([a, b], #{a => #{b => #axb_config{parameters => #{
+%%          x => #axb_config_param{actual = 3}
+%%          y => #{yy => #axb_config_param{actual = 14}}
 %%      }}}}) ->
 %%          #{x => 3, y => #{yy => 14}}
 %%
 get_actual(ConfigPath, ConfigVariant, Configs) ->
     case get_config(ConfigPath, Configs) of
-        {ok, #config{parameters = Parameters}} ->
+        {ok, #axb_config{parameters = Parameters}} ->
             ExtractActual = fun
                 ExtractActual(ParamsMap) when is_map(ParamsMap) ->
                     maps:map(fun (_N, V) -> ExtractActual(V) end, ParamsMap);
-                ExtractActual(#config_param{actual = Actual, default = Default, cardinality = map}) ->
+                ExtractActual(#axb_config_param{actual = Actual, default = Default, cardinality = map}) ->
                     case maps:get(ConfigVariant, Actual, Default) of
                         undefined -> Default;
                         Other     -> Other
                     end;
-                ExtractActual(#config_param{actual = Actual, cardinality = C}) when C =:= opt; C =:= one ->
+                ExtractActual(#axb_config_param{actual = Actual, cardinality = C}) when C =:= opt; C =:= one ->
                     Actual
             end,
             {ok, ExtractActual(Parameters)};
@@ -347,7 +347,7 @@ get_actual(ConfigPath, ConfigVariant, Configs) ->
 
 
 %%  @private
-%%  get_config returns the entire #config{}
+%%  get_config returns the entire #axb_config{}
 %%  for the specified name.
 %%
 get_config([], Configs) ->
@@ -372,7 +372,7 @@ read_env_config(State = #state{configs = Configs, env_file = EnvFile, env_mtime 
             {ok, EnvFileContents} = file:read_file(EnvFile),
             {ok, EnvProperties} = parse_properties(EnvFileContents),
             EnvConfig = normalize_config(EnvProperties),
-            NewConfigs = apply_config(EnvConfig, #config_param.environment, Configs),
+            NewConfigs = apply_config(EnvConfig, #axb_config_param.environment, Configs),
             NewState = State#state{
                 configs    = NewConfigs,
                 env_mtime  = MTime,
@@ -517,22 +517,22 @@ merge_values(NewValues, Config) when is_map(NewValues), is_map(Config) ->
 %%  in the configs.
 %%
 
-% Handle particular #config{}.
-apply_config(NewValues, Field, Config = #config{parameters = Parameters}) ->
+% Handle particular #axb_config{}.
+apply_config(NewValues, Field, Config = #axb_config{parameters = Parameters}) ->
     ApplyParams = fun
-        ApplyParams(NV, ConfigParam = #config_param{}) ->
+        ApplyParams(NV, ConfigParam = #axb_config_param{}) ->
             apply_config(NV, Field, ConfigParam);
         ApplyParams(undefined, ParamsMap) when is_map(ParamsMap) ->
             maps:map(fun (_N, V) -> ApplyParams(undefined, V) end, ParamsMap);
         ApplyParams(NV, ParamsMap) when is_map(NV), is_map(ParamsMap) ->
             maps:map(fun (N, V) -> ApplyParams(maps:get(N, NV, undefined), V) end, ParamsMap)
     end,
-    Config#config{
+    Config#axb_config{
         parameters = ApplyParams(NewValues, Parameters)
     };
 
-% Handle particular #config_param{}.
-apply_config(NewValue, Field, ConfigParam = #config_param{type = Type, cardinality = map}) ->
+% Handle particular #axb_config_param{}.
+apply_config(NewValue, Field, ConfigParam = #axb_config_param{type = Type, cardinality = map}) ->
     DecodedValue = case NewValue of
         #{}       -> maps:map(fun (_N, V) -> decode_value(Type, V) end, NewValue);
         undefined -> undefined;
@@ -544,7 +544,7 @@ apply_config(NewValue, Field, ConfigParam = #config_param{type = Type, cardinali
         (Map) when is_map(Map) -> Map;
         (Other)                -> #{default => Other}
     end,
-    #config_param{
+    #axb_config_param{
         runtime     = Runtime,
         environment = Environment,
         static      = Static,
@@ -554,20 +554,20 @@ apply_config(NewValue, Field, ConfigParam = #config_param{type = Type, cardinali
         fun (V, A) -> maps:merge(A, UndefEmpty(V)) end,
         #{}, [Default, Static, Environment, Runtime]
     ),
-    TmpConfigParam#config_param{
+    TmpConfigParam#axb_config_param{
         actual = NewActual
     };
 
-apply_config(NewValue, Field, ConfigParam = #config_param{type = Type, cardinality = C}) when C =:= opt; C =:= one ->
+apply_config(NewValue, Field, ConfigParam = #axb_config_param{type = Type, cardinality = C}) when C =:= opt; C =:= one ->
     DecodedValue = decode_value(Type, NewValue),
     TmpConfigParam = erlang:setelement(Field, ConfigParam, DecodedValue),
     NewActual = case TmpConfigParam of
-        #config_param{runtime     = Val} when Val =/= undefined -> Val;
-        #config_param{environment = Val} when Val =/= undefined -> Val;
-        #config_param{static      = Val} when Val =/= undefined -> Val;
-        #config_param{default     = Val}                        -> Val
+        #axb_config_param{runtime     = Val} when Val =/= undefined -> Val;
+        #axb_config_param{environment = Val} when Val =/= undefined -> Val;
+        #axb_config_param{static      = Val} when Val =/= undefined -> Val;
+        #axb_config_param{default     = Val}                        -> Val
     end,
-    TmpConfigParam#config_param{
+    TmpConfigParam#axb_config_param{
         actual = NewActual
     };
 
@@ -720,17 +720,17 @@ normalize_config_test_()->
 
 
 get_actual_test_()->
-    Config = #config{parameters = #{
-        x => #config_param{actual = 3},
-        y => #{yy => #config_param{actual = 14}}
+    Config = #axb_config{parameters = #{
+        x => #axb_config_param{actual = 3},
+        y => #{yy => #axb_config_param{actual = 14}}
     }},
-    ConfigCardinality = #config{parameters = #{
-        x => #config_param{actual = 3},
-        y => #config_param{actual = #{yy => 23, zz => 34}, cardinality = map, default = 12}
+    ConfigCardinality = #axb_config{parameters = #{
+        x => #axb_config_param{actual = 3},
+        y => #axb_config_param{actual = #{yy => 23, zz => 34}, cardinality = map, default = 12}
     }},
     WrongConfig = #{parameters => #{
-                    x => #config_param{actual = 3},
-                    y => #{yy => #config_param{actual = 14}}
+                    x => #axb_config_param{actual = 3},
+                    y => #{yy => #axb_config_param{actual = 14}}
     }},
     [
         {"Actual config", ?_assertEqual(
@@ -772,9 +772,9 @@ get_actual_test_()->
 
 
 get_config_test_() ->
-    Config = #config{parameters = #{
-        x => #config_param{actual = 3},
-        y => #{yy => #config_param{actual = 14}}
+    Config = #axb_config{parameters = #{
+        x => #axb_config_param{actual = 3},
+        y => #{yy => #axb_config_param{actual = 14}}
     }},
     [
         {"Config", ?_assertEqual(
@@ -817,18 +817,18 @@ merge_values_test_() ->
 
 
 apply_config_test_() ->
-    Field = #config_param.runtime,
-    Config = #{a => #{b => #config{
+    Field = #axb_config_param.runtime,
+    Config = #{a => #{b => #axb_config{
         parameters = #{
-            host => #config_param{
+            host => #axb_config_param{
                 type = boolean
             }
         }
     }}},
     NewValues = #{a => #{b => #{host => "false"}}},
-    NewConfig = #{a => #{b => #config{
+    NewConfig = #{a => #{b => #axb_config{
         parameters = #{
-            host => #config_param{
+            host => #axb_config_param{
                 type = boolean,
                 runtime = false,
                 actual = false
@@ -849,14 +849,14 @@ apply_config_test_() ->
             apply_config(#{a => #{}}, Field, NewConfig)
         )},
         {"Deep config", ?_assertEqual(
-            #{a => #{b => #config{
+            #{a => #{b => #axb_config{
                 parameters = #{
-                    host => #config_param{
+                    host => #axb_config_param{
                         type = boolean,
                         runtime = false,
                         actual = false
                     },
-                    d => #{k => #config_param{
+                    d => #{k => #axb_config_param{
                         type = integer,
                         runtime = 12,
                         actual = 12
@@ -866,12 +866,12 @@ apply_config_test_() ->
             apply_config(
                 #{a => #{b => #{host => "false", d => #{k => 12}}}},
                 Field,
-                #{a => #{b => #config{
+                #{a => #{b => #axb_config{
                     parameters = #{
-                        host => #config_param{
+                        host => #axb_config_param{
                             type = boolean
                         },
-                        d => #{k => #config_param{
+                        d => #{k => #axb_config_param{
                             type = integer
                         }}
                     }
@@ -879,9 +879,9 @@ apply_config_test_() ->
             )
         )},
         {"Config for paratemer with cardinality=map, implicit default value", ?_assertMatch(
-            #{adapter_a := #{channel_b := #config{
+            #{adapter_a := #{channel_b := #axb_config{
                 parameters = #{
-                    base_dir := #config_param{
+                    base_dir := #axb_config_param{
                         actual = #{default := "dir_for_default"}
                     }
                 }
@@ -889,9 +889,9 @@ apply_config_test_() ->
             apply_config(
                 #{adapter_a => #{channel_b => #{base_dir => "dir_for_default"}}},
                 Field,
-                #{adapter_a => #{channel_b => #config{
+                #{adapter_a => #{channel_b => #axb_config{
                     parameters = #{
-                        base_dir => #config_param{
+                        base_dir => #axb_config_param{
                             type        = string,
                             cardinality = map
                         }
@@ -900,9 +900,9 @@ apply_config_test_() ->
             )
         )},
         {"Config for paratemer with cardinality=map, explicit default value", ?_assertMatch(
-            #{adapter_a := #{channel_b := #config{
+            #{adapter_a := #{channel_b := #axb_config{
                 parameters = #{
-                    base_dir := #config_param{
+                    base_dir := #axb_config_param{
                         actual = #{default := "dir_for_default"}
                     }
                 }
@@ -910,9 +910,9 @@ apply_config_test_() ->
             apply_config(
                 #{adapter_a => #{channel_b => #{base_dir => #{default => "dir_for_default"}}}},
                 Field,
-                #{adapter_a => #{channel_b => #config{
+                #{adapter_a => #{channel_b => #axb_config{
                     parameters = #{
-                        base_dir => #config_param{
+                        base_dir => #axb_config_param{
                             type        = string,
                             cardinality = map
                         }
@@ -949,9 +949,9 @@ decode_value_test_() ->
 
 
 add_config_spec_test_() ->
-    Config = #config{
+    Config = #axb_config{
         parameters = #{
-            host => #config_param{
+            host => #axb_config_param{
                 type = string,
                 default = "somehost"
             }

@@ -479,6 +479,7 @@ decode_value(integer, Value) when is_list(Value)    -> erlang:list_to_integer(Va
 decode_value(integer, Value) when is_binary(Value)  -> erlang:binary_to_integer(Value);
 decode_value(atom, Value) when is_atom(Value) -> Value;
 decode_value(atom, Value) when is_list(Value) -> erlang:list_to_existing_atom(Value);
+decode_value(enum, Value) when is_list(Value) -> decode_value(term, "[" ++ Value ++ "]");
 decode_value(term, Value) when is_list(Value) ->
     {ok, Scanned, _} = erl_scan:string(Value ++ "."),
     {ok, Term} = erl_parse:parse_term(Scanned),
@@ -940,6 +941,10 @@ decode_value_test_() ->
         {"Term functionality (atom).", ?_assertEqual(
             value,
             decode_value(atom, "value")
+        )},
+        {"Decode enum of atoms.", ?_assertEqual(
+            [val_1, val_2],
+            decode_value(enum, "val_1,val_2")
         )},
         {"Term functionality (term).", ?_assertEqual(
             #{a => #{b => #{host => 34, d => #{k => 12}}}},

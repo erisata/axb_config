@@ -76,19 +76,19 @@ by the configured components. The path should point to the particular
 configuration, that was previously configured via register_config/2.
 
 The configuration is returned as a map, with keys as atoms, and
-values of types, as specified in the #config_param.type.
+values of types, as specified in the #axb_config_param.type.
 
 <a name="get_config_info-1"></a>
 
 ### get_config_info/1 ###
 
 <pre><code>
-get_config_info(ConfigPath::[atom()]) -&gt; {ok, #config{} | #{}}
+get_config_info(ConfigPath::[atom()]) -&gt; {ok, #axb_config{} | #{}}
 </code></pre>
 <br />
 
 Returns all the configs, under the specified path. The function
-returns particular #config{}, if the ConfigPath points it directly,
+returns particular #axb_config{}, if the ConfigPath points it directly,
 or a map of configs under the specified preffix.
 
 <a name="register_config-2"></a>
@@ -96,7 +96,7 @@ or a map of configs under the specified preffix.
 ### register_config/2 ###
 
 <pre><code>
-register_config(ConfigPath::[atom()], ConfigSpec::#config{}) -&gt; ok | {error, Reason::term()}
+register_config(ConfigPath::[atom()], ConfigSpec::#axb_config{}) -&gt; ok | {error, Reason::term()}
 </code></pre>
 <br />
 

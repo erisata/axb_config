@@ -17,6 +17,10 @@ data). E.g. host="some.org". These are provided in order
 to minimize the ammount of fields an administrator must
 provide. It can be considered as a baseline configuration.
 
+* `system` -- are the values read from the sys.config of the
+release. It can be considered as a release-specific
+static/default configuration provided by the packager.
+
 * `environment` -- are the values read for the application
     environment (file system). In most cases it will be a
     file in the `/etc` directory. This file is edited by The

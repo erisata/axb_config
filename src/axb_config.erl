@@ -86,8 +86,20 @@ start_link(ConstConfig) ->
 %%  @doc
 %%  Register configuration spec to the specific path.
 %%
--spec register_config(ConfigPath :: [atom()], ConfigSpec :: #axb_config{})
-    -> ok | {error, Reason :: term()}.
+-spec register_config(
+        ConfigPath :: [atom()],
+        ConfigSpec :: #axb_config{} | ConfigSpecMap
+    ) ->
+        ok |
+        {error, Reason :: term()}
+    when
+        ConfigSpecMap :: #{
+            type        => string | integer | boolean | enum | term,    % default = string
+            description => string(),                                    % default = undefined
+            cardinality => opt | one | map,                             % default = one
+            static      => term(),                                      % default = undefined
+            default     => term()                                       % default = undefined
+        }.
 
 register_config(ConfigPath, ConfigSpec) when is_list(ConfigPath) ->
     gen_server:call(?MODULE, {register_config, ConfigPath, ConfigSpec}).
@@ -315,6 +327,38 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions.
 %%% ============================================================================
 
+%%
+%%  Convert configuration specification to a record-based structure.
+%%
+normalize_config_spec(ConfigSpec = #axb_config{parameters = Parameters}) ->
+    ConfigSpec#axb_config{
+        parameters = maps:map(fun normalize_config_spec_param/2, Parameters)
+    };
+
+normalize_config_spec(ConfigSpec) when is_map(ConfigSpec) ->
+    #axb_config{
+        config_type = maps:get(config_type, ConfigSpec, undefined),
+        description = maps:get(description, ConfigSpec, undefined),
+        parameters = maps:map(fun normalize_config_spec_param/2, maps:get(parameters, ConfigSpec, #{}))
+    }.
+
+normalize_config_spec_param(_ParamName, ParamSpec = #axb_config_param{}) ->
+    ParamSpec;
+
+normalize_config_spec_param(_ParamName, ParamSpec) when is_map(ParamSpec) ->
+    % Nested parameters
+    maps:map(fun normalize_config_spec_param/2, ParamSpec);
+
+normalize_config_spec_param(_ParamName, {param, ParamSpec}) when is_map(ParamSpec) ->
+    #axb_config_param{
+        type        = maps:get(type,        ParamSpec, string),
+        description = maps:get(description, ParamSpec, undefined),
+        cardinality = maps:get(cardinality, ParamSpec, one),
+        static      = maps:get(static,      ParamSpec, undefined),
+        default     = maps:get(default,     ParamSpec, undefined)
+    }.
+
+
 %%  @private
 %%  Get actual values for the specified config. Example:
 %%
@@ -490,7 +534,7 @@ decode_value(term, Value) when is_list(Value) ->
 %%
 %%
 add_config_spec([Name], NewConfig, Configs) ->
-    Configs#{Name => NewConfig};
+    Configs#{Name => normalize_config_spec(NewConfig)};
 
 add_config_spec([Name | Tail], NewConfig, Configs) ->
     Configs#{Name => add_config_spec(Tail, NewConfig, maps:get(Name, Configs, #{}))}.
@@ -974,6 +1018,27 @@ add_config_spec_test_() ->
                 c => Config
             }},
             add_config_spec([a, c], Config, NewConfigs)
+        )},
+        {"Adding map-based config spec.", ?_assertEqual(
+            #{a => #{
+                c => #axb_config{
+                    config_type = test,
+                    description = "Test",
+                    parameters = #{
+                        host => #axb_config_param{
+                            type = string,
+                            default = "somehost"
+                        }
+                    }
+                }
+            }},
+            add_config_spec([a, c], #{
+                config_type => test,
+                description => "Test",
+                parameters => #{
+                    host => {param, #{type => string, default => "somehost"}}
+                }
+            }, #{})
         )},
         {"Do not allow to overwrite the configs.", ?_assertError(
             _AnyError,

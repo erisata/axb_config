@@ -4,7 +4,7 @@
 %%
 -record(axb_config_param, {
    %name                :: [atom()],        % Name of the parameter is stored as a name in the #config{parameters} map.
-    type                :: string | integer | boolean | term,   % Type of the values.
+    type                :: string | integer | boolean | enum | term,   % Type of the values.
     description         :: string(),        % Description of the parameter.
     cardinality = one   :: opt | one | map, % Parameter is optional, shoutd have single value or a map(config => val).
     actual              :: term(),          % Actual, effective value of the parameter.

@@ -65,22 +65,48 @@ end_per_testcase(TestCase, _Config) ->
 %%
 %%
 test_basic(_Config) ->
-    {ok, Pid} = axb_config:start_link(#{"registry.conn.host" => "localhost"}),
+    {ok, Pid} = axb_config:start_link(#{
+        "registry.conn.host" => "localhost",
+        "registry.conn.path" => #{
+            server1 => "path1",
+            server2 => "path2"
+        }
+    }),
     {ok, #{}} = axb_config:get_config_info([]),
     {error, {not_found, [a]}} = axb_config:get_config_info([a]),
     %
     % Check if register config correctly registers config.
     ok = axb_config:register_config(
         [registry, conn],
-        #axb_config{parameters = #{host => #axb_config_param{type = string, default = "nowhere"}}}
+        #axb_config{parameters = #{
+            host => #axb_config_param{type = string, default = "nowhere"},
+            path => #axb_config_param{type = string, default = "nothing", cardinality = map}
+        }}
     ),
-    {ok, #axb_config{parameters = #{host := #axb_config_param{
-        type = string,
-        default = "nowhere",
-        actual = "localhost",
-        environment = "localhost"
-    }}}} = axb_config:get_config_info([registry, conn]),
-    {ok, #{host := "localhost"}} = axb_config:get_actual_config([registry, conn]),
+    {ok, #axb_config{parameters = #{
+        host := #axb_config_param{
+            type = string,
+            default = "nowhere",
+            actual = "localhost",
+            environment = "localhost"
+        },
+        path := #axb_config_param{
+            type = string,
+            default = "nothing",
+            actual = #{
+                default := "nothing",
+                server1 := "path1",
+                server2 := "path2"
+            },
+            environment = #{
+                server1 := "path1",
+                server2 := "path2"
+            }
+        }
+    }}} = axb_config:get_config_info([registry, conn]),
+    {ok, #{host := "localhost", path := "nothing"}} = axb_config:get_actual_config([registry, conn]),
+    {ok, #{host := "localhost", path := "path1"}} = axb_config:get_actual_config([registry, conn], server1),
+    {ok, #{host := "localhost", path := "path2"}} = axb_config:get_actual_config([registry, conn], server2),
     %
     % Check if runtime config overrides other values.
     ok = axb_config:set_runtime_config(#{"registry.conn.host" => "somehost"}),
@@ -92,6 +118,30 @@ test_basic(_Config) ->
         environment = "localhost"
     }}}} = axb_config:get_config_info([registry, conn]),
     {ok, #{host := "somehost"}} = axb_config:get_actual_config([registry, conn]),
+    ok = axb_config:set_runtime_config(#{"registry.conn.path" => #{
+        server1 => "runtimepath1",
+        server2 => "runtimepath2"
+    }}),
+    {ok, #axb_config{parameters = #{path := #axb_config_param{
+        type = string,
+        default = "nothing",
+        actual = #{
+            default := "nothing",
+            server1 := "runtimepath1",
+            server2 := "runtimepath2"
+        },
+        runtime = #{
+            server1 := "runtimepath1",
+            server2 := "runtimepath2"
+        },
+        environment = #{
+            server1 := "path1",
+            server2 := "path2"
+        }
+    }}}} = axb_config:get_config_info([registry, conn]),
+    {ok, #{path := "nothing"}} = axb_config:get_actual_config([registry, conn]),
+    {ok, #{path := "runtimepath1"}} = axb_config:get_actual_config([registry, conn], server1),
+    {ok, #{path := "runtimepath2"}} = axb_config:get_actual_config([registry, conn], server2),
     %
     % Exit test
     true = erlang:unlink(Pid),

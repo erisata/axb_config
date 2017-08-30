@@ -524,7 +524,7 @@ decode_value(integer, Value) when is_binary(Value)  -> erlang:binary_to_integer(
 decode_value(atom, Value) when is_atom(Value) -> Value;
 decode_value(atom, Value) when is_list(Value) -> erlang:list_to_existing_atom(Value);
 decode_value(enum, Value) when is_list(Value) -> decode_value(term, "[" ++ Value ++ "]");
-decode_value(term, Value) when is_list(Value) ->
+decode_value(term, Value) when is_list(Value) ->    % TODO: Handle term variables from the source code without parsing them.
     {ok, Scanned, _} = erl_scan:string(Value ++ "."),
     {ok, Term} = erl_parse:parse_term(Scanned),
     Term.

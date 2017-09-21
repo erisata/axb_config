@@ -96,9 +96,10 @@ or a map of configs under the specified preffix.
 ### register_config/2 ###
 
 <pre><code>
-register_config(ConfigPath::[atom()], ConfigSpec::#axb_config{}) -&gt; ok | {error, Reason::term()}
+register_config(ConfigPath::[atom()], ConfigSpec::#axb_config{} | ConfigSpecMap) -&gt; ok | {error, Reason::term()}
 </code></pre>
-<br />
+
+<ul class="definitions"><li><code>ConfigSpecMap = #{type =&gt; string | integer | boolean | enum | term, description =&gt; string(), cardinality =&gt; opt | one | map, static =&gt; term(), default =&gt; term()}</code></li></ul>
 
 Register configuration spec to the specific path.
 

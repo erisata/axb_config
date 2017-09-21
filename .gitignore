@@ -3,6 +3,7 @@
 .directory
 .kateproject
 .kateproject.d/
+_build/
 ebin/
 logs/
 deps/

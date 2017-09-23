@@ -38,5 +38,6 @@ by priority as listed above (runtime values have highest priority).
 
 
 <table width="100%" border="0" summary="list of modules">
-<tr><td><a href="http://github.com/erisata/axb_config/blob/master/doc/axb_config.md" class="module">axb_config</a></td></tr></table>
+<tr><td><a href="http://github.com/erisata/axb_config/blob/master/doc/axb_config.md" class="module">axb_config</a></td></tr>
+<tr><td><a href="http://github.com/erisata/axb_config/blob/master/doc/axb_config_console.md" class="module">axb_config_console</a></td></tr></table>
 

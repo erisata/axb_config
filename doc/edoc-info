@@ -1,3 +1,0 @@
-%% encoding: UTF-8
-{application,axb_config}.
-{modules,[axb_config]}.

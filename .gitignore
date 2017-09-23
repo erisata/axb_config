@@ -8,6 +8,9 @@ ebin/
 logs/
 deps/
 log/
+doc/edoc-info
+doc/erlang.png
+doc/stylesheet.css
 *.bak
 *.swp
 *.beam

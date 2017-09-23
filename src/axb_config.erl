@@ -475,6 +475,15 @@ parse_properties(Contents) ->
 %%          }},
 %%      }
 %%
+normalize_config(#{[] := undefined}) ->
+    undefined;
+
+normalize_config(Config) when is_list(Config) ->
+    case lists:keyfind([], 1, Config) of
+        {[], undefined} -> undefined;
+        false           -> normalize_config(Config, #{})
+    end;
+
 normalize_config(Config) ->
     normalize_config(Config, #{}).
 

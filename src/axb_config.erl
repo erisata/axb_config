@@ -264,7 +264,7 @@ handle_call(reload_env_config, _From, State) ->
         {ok, NewState}  -> {reply, ok, NewState};
         {error, Reason} -> {reply, {error, Reason}, State}
     catch
-        ErrClass:Reason -> {reply, {error, {ErrClass, Reason}}, State}
+        ErrClass:Reason -> {reply, {error, {ErrClass, Reason, erlang:get_stacktrace()}}, State}
     end;
 
 handle_call({set_runtime_config, RuntimeConfig}, _From, State = #state{configs = Configs, rt_config = RtConfig}) ->

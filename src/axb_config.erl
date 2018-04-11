@@ -436,7 +436,15 @@ parse_properties(Contents) ->
     ContentsStr = unicode:characters_to_list(Contents, utf8),
     ContentLines = string:tokens(ContentsStr, "\r\n"),
     StripVal = fun (Val, Dir) ->
-        string:strip(string:strip(Val, Dir, $\s), Dir, $\t)
+        Regex = case Dir of
+            both  -> "^\\s*(.*?)\\s*$";
+            left  -> "^\\s*(.*)$";
+            right -> "^(.*?)\\s*$"
+        end,
+        case re:run(Val, Regex, [{capture, all_but_first, list}, unicode]) of
+            {match, [Stripped]} -> Stripped;
+            nomatch             -> Val
+        end
     end,
     ParseLine = fun (Line) ->
         case StripVal(Line, left) of
@@ -658,7 +666,7 @@ parse_properties_test_() ->
             parse_properties([
                 <<" \n">>,
                 <<"\n">>,
-                <<"  registry.conn.type   =   mock   ">>
+                <<"  registry.conn.type \t  =   mock   ">>
             ])
         )},
         {"Couple properties.", ?_assertEqual(
